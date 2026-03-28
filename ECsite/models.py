@@ -10,7 +10,7 @@ class BaseInfo(models.Model):
 
 class Items(BaseInfo):
     name = models.CharField(max_length=30, unique=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.IntegerField()
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='items/',blank=True)
 

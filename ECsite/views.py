@@ -9,7 +9,7 @@ from .models import Items
 
 
 class ItemIndex(ListView):
-    template_name = "item_index.html"
+    template_name = "index.html"
     model = Items
     context_object_name = 'item_list'
 
@@ -19,11 +19,13 @@ class ItemDetail(DetailView):
     context_object_name = 'item'
 
     def get_context_data(self, **kwargs):
-        items = Items.objects.order_by("created_at")
+        context = super().get_context_data(**kwargs)
 
-        if self.request.user.is_authenticated and context[self.context_object_name]:
-        post = context[self.context_object_name]
-        post.edit_url = reverse(f'admin:{post._meta.app_label}_{post._meta.model_name}_change', args=[post.id] )
+        # 今表示している商品
+        current_item = self.object
+
+        # 今の商品以外で、商品一覧から作成された新しい順で４つを出す。
+        context['new_item_list'] = Items.objects.exclude(id=current_item.id).order_by('-created_at')[:4]
         return context
         
 
