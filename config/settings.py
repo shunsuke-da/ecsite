@@ -45,7 +45,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'basicauth.middleware.BasicAuthMiddleware',
+    #'basicauth.middleware.BasicAuthMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -143,5 +143,5 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-BASICAUTH_USERS={"admin": "pass", "shun": "pass"}
+BASICAUTH_USERS={"admin": "password", "shun": "pass"}
 
