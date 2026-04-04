@@ -143,5 +143,10 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-BASICAUTH_USERS={"admin": "password", "shun": "pass"}
+
+import os
+
+BASICAUTH_USERNAME = os.getenv("BASICAUTH_USERNAME")
+BASICAUTH_PASSWORD = os.getenv("BASICAUTH_PASSWORD")
+# BASICAUTH_USERS={"admin": "password", "shun": "pass"}
 
