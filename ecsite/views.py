@@ -1,5 +1,4 @@
 from django.views.generic import ListView, DetailView, CreateView, DeleteView, UpdateView
-from basicauth.decorators import basic_auth_required
 from django.urls import reverse_lazy
 from .models import Items
 

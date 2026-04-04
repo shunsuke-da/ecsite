@@ -59,11 +59,18 @@
                 <div class="col mb-5">
                     <div class="card h-100">
                         <!-- Product image-->
-                            <a href="{% url 'detail' item.pk%}"
-                            tabindex="-1"
-                            role="button"
-                            >
-                            <img class="card-img-top" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="..." />
+                        <a href="{% url 'detail' item.pk%}"
+                        tabindex="-1"
+                        role="button"
+                        >
+                        {% if item and item.image %}
+                            <img class="card-img-top"
+                                src="{{ item.image.url }}"
+                                style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <img class="card-img-top item-image" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="..." />
+                        {% endif %}
+                                              
                         </a>
                         <!-- Product details-->
                         <div class="card-body p-4 d-flex flex-column">
