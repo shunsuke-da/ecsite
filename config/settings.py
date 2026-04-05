@@ -146,8 +146,8 @@ sys.path.insert(0, str(BASE_DIR))
 
 import os
 
-BASICAUTH_USERS = {
-    os.getenv("BASICAUTH_USERNAME"): os.getenv("BASICAUTH_PASSWORD")
-}
+# BASICAUTH_USERS = {
+#     os.getenv("BASICAUTH_USERNAME"): os.getenv("BASICAUTH_PASSWORD")
+# }
 
-#BASICAUTH_USERS = {"shun": "pass"}
+BASICAUTH_USERS = {"shun": "pass"}

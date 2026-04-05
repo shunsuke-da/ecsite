@@ -16,3 +16,22 @@ class Items(BaseInfo):
 
     def __str__(self):
         return self.name
+
+class Carts(BaseInfo):
+    cart_id = models.BigAutoField(primary_key=True)
+
+
+class CartItems(BaseInfo):
+    item = models.ForeignKey(Items, on_delete=models.CASCADE)
+    cart = models.ForeignKey(Carts, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+
+                 # カートIDとアイテムでユニーク制約
+                fields=["cart", "item"],
+                name="cart_item_unique"
+            ),
+        ]
