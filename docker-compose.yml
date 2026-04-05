@@ -30,7 +30,7 @@ services:
         condition: service_healthy
     environment:
       - BASICAUTH_USERNAME=admin
-      - BASICAUTH_PASSWORD=pass
+      - BASICAUTH_PASSWORD=pw
 
 volumes:
   db-data:

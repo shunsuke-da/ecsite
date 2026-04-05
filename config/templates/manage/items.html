@@ -62,7 +62,13 @@
                         <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
                             <div class="d-flex justify-content-center gap-2">
                                 <a class="btn btn-outline-dark mt-auto" href="{% url 'update_item' item.pk %}">編集</a>
-                                <a class="btn btn-outline-danger mt-auto" href="{% url 'delete_item' item.pk %}">削除</a>
+                                <form method="post" action="{% url 'delete_item' item.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger mt-auto"
+                                            onclick="return confirm('削除しますか？');">
+                                        削除
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>

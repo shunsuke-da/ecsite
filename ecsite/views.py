@@ -1,4 +1,5 @@
 from django.views.generic import ListView, DetailView, CreateView, DeleteView, UpdateView
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from .models import Items
 
@@ -42,8 +43,10 @@ class UpdateItemView(UpdateView):
     fields = ('name', 'price', 'description' , 'image')
     success_url = reverse_lazy('manage_items_list')
 
-class DeleteItemView(DeleteView):
-    template_name = "manage/delete_item.html"
-    model = Items
-    context_object_name = 'item'
-    success_url = reverse_lazy('manage_items_list')
+def delete_item(request, pk):
+    item = get_object_or_404(Items, pk=pk)
+    
+    if request.method == "POST":
+        item.delete()
+    
+    return redirect('manage_items_list')

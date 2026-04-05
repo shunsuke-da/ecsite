@@ -149,3 +149,5 @@ import os
 BASICAUTH_USERS = {
     os.getenv("BASICAUTH_USERNAME"): os.getenv("BASICAUTH_PASSWORD")
 }
+
+#BASICAUTH_USERS = {"shun": "pass"}
