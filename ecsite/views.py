@@ -1,7 +1,7 @@
 from django.views.generic import ListView, DetailView, CreateView, DeleteView, UpdateView
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect,render
 from django.urls import reverse_lazy
-from .models import Items
+from .models import Items, Carts, CartItems
 
 
 class ItemListView(ListView):
@@ -53,15 +53,39 @@ def delete_item(request, pk):
 
 # カート機能
 def add_one_cart_func(request, pk):
+    # セッションに関すること必要？
     # POST
     # 分岐：まず、ユーザのカートがあるか、
     # あれば　⇨ ITEM_CARTにあるか確認
         # あれば ⇨　個数追加
-        # なければ ⇨　ITEM_CART追加
+        # なければ(新しいアイテムであれば) ⇨　ITEM_CART追加 
 
     # なければ. ⇨ INSERT （カートテーブル、アイテムカートテーブル）
     # 最後に個数を表示ように返す
-    return
+    if request.method == "POST":
+        if not request.session.session_key:
+            request.session.create()
+        session_key = request.session.session_key
+
+        cart, created = Carts.objects.get_or_create(session_key=session_key)
+
+        cart_item = CartItems.objects.filter(
+            cart=cart,
+            item_id=pk
+        ).first()
+            # cart_object = get_object_or_404(Carts,cart_id=cart_id)
+
+            # カートがあれば（一度でもアイテムをカートに入れていれば）
+            # cart_item = get_object_or_404(CartItems,item_id=pk)
+
+            # カートアイテムがあれば（カートへ同じ商品を追加であれば）
+        if cart_item:
+            cart_item.quantity += 1
+        else:
+            cart_item = CartItems(cart=cart, item_id=pk, quantity=1)
+
+        cart_item.save()
+        return redirect('index')
 
 def add_some_cart_func(request, pk):
     return

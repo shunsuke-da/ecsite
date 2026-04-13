@@ -19,6 +19,7 @@ class Items(BaseInfo):
 
 class Carts(BaseInfo):
     cart_id = models.BigAutoField(primary_key=True)
+    session_key = models.CharField(max_length=255, null=True, blank=True)
 
 
 class CartItems(BaseInfo):

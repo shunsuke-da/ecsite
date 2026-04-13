@@ -25,7 +25,7 @@
                     <button class="btn btn-outline-dark" type="submit">
                         <i class="bi-cart-fill me-1"></i>
                         Cart
-                        <span class="badge bg-dark text-white ms-1 rounded-pill">0</span>
+                        <span class="badge bg-dark text-white ms-1 rounded-pill">{{ cart_quantity }} </span>
                     </button>
                 </form>
             </div>
@@ -81,8 +81,16 @@
                         </div>
                         <!-- Product actions-->
                         <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-                            <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="#">Add to cart</a></div>
+                            <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="{% url 'add_one_cart' item.pk %}">Add to cart</a></div>
                         </div>
+                                <form method="post" action="{% url 'add_one_cart' item.pk %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger mt-auto"
+                                            onclick="return confirm('削除しますか？');">
+                                        削除
+                                    </button>
+                                </form>
+                        
                     </div>
                 </div>
                 {% endfor %}

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ItemListView, ItemDetailView, ManageItemListView, CreateItemView , UpdateItemView, delete_item
+from .views import ItemListView, ItemDetailView, ManageItemListView, CreateItemView , UpdateItemView, delete_item, add_one_cart_func
 from django.views.generic.base import TemplateView
 from basicauth.decorators import basic_auth_required
 from django.conf import settings
@@ -18,6 +18,6 @@ urlpatterns = [
      path("manage/items/<int:pk>/delete/", basic_auth_required(delete_item), name="delete_item"),
 
      # カート機能
-     path("manage/items/<int:pk>/add_one_cart/", add_one_cart_func, name="add_one_cart"),
+     path("items/<int:pk>/add_one_cart/", add_one_cart_func, name="add_one_cart"),
 ]
 
