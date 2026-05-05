@@ -21,13 +21,15 @@
                         </ul>
                     </li>
                 </ul>
-                <form class="d-flex">
-                    <button class="btn btn-outline-dark" type="submit">
+                <div class="d-flex">
+                    <a href="{% url 'cart_detail' %}" class="btn btn-outline-dark">
                         <i class="bi-cart-fill me-1"></i>
                         Cart
-                        <span class="badge bg-dark text-white ms-1 rounded-pill">{{ cart_quantity }} </span>
-                    </button>
-                </form>
+                        <span class="badge bg-dark text-white ms-1 rounded-pill">
+                            {{ cart_quantity }}
+                        </span>
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
@@ -80,16 +82,12 @@
                             </div>
                         </div>
                         <!-- Product actions-->
-                        <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
-                            <div class="text-center"><a class="btn btn-outline-dark mt-auto" href="{% url 'add_one_cart' item.pk %}">Add to cart</a></div>
-                        </div>
-                                <form method="post" action="{% url 'add_one_cart' item.pk %}" style="display:inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-outline-danger mt-auto"
-                                            onclick="return confirm('削除しますか？');">
-                                        削除
-                                    </button>
-                                </form>
+                        <form method="post" action="{% url 'add_one_cart' item.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <div class="card-footer p-4 pt-0 border-top-0 bg-transparent text-center">
+                                <button type="submit" class="btn btn-outline-dark mt-auto" >Add to cart</button>
+                            </div>
+                        </form>
                         
                     </div>
                 </div>

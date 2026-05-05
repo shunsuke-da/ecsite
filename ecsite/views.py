@@ -1,13 +1,27 @@
-from django.views.generic import ListView, DetailView, CreateView, DeleteView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, DeleteView, UpdateView,TemplateView
 from django.shortcuts import get_object_or_404, redirect,render
+from django.db.models import F, Sum
 from django.urls import reverse_lazy
 from .models import Items, Carts, CartItems
-
 
 class ItemListView(ListView):
     template_name = "index.html"
     model = Items
     context_object_name = 'item_list'
+
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+
+            # カート取得（例：session）
+            if not self.request.session.session_key:
+                self.request.session.create()
+
+            cart, _ = Carts.objects.get_or_create(
+                session_key=self.request.session.session_key
+            )
+
+            context["cart_quantity"] = cart.sum_cart_item_display()
+            return context
 
 class ItemDetailView(DetailView):
     template_name = "detail.html"
@@ -20,12 +34,16 @@ class ItemDetailView(DetailView):
         # 今表示している商品
         current_item = self.object
 
+        cart, _ = Carts.objects.get_or_create(
+            session_key=self.request.session.session_key
+        )
+
         # 今の商品以外で、商品一覧から作成された新しい順で４つを出す。
         context['new_item_list'] = Items.objects.exclude(id=current_item.id).order_by('-created_at')[:4]
+        context["cart_quantity"] = cart.sum_cart_item_display()
         return context 
 
-
-# 管理画面
+########## 管理画面 #########
 class ManageItemListView(ListView):
     template_name = "manage/items.html"
     model = Items
@@ -50,45 +68,121 @@ def delete_item(request, pk):
         item.delete()
     
     return redirect('manage_items_list')
+############################
 
-# カート機能
-def add_one_cart_func(request, pk):
-    # セッションに関すること必要？
-    # POST
-    # 分岐：まず、ユーザのカートがあるか、
-    # あれば　⇨ ITEM_CARTにあるか確認
-        # あれば ⇨　個数追加
-        # なければ(新しいアイテムであれば) ⇨　ITEM_CART追加 
+########## カート& チェックアウト画面 #########
 
-    # なければ. ⇨ INSERT （カートテーブル、アイテムカートテーブル）
-    # 最後に個数を表示ように返す
+########## カート機能 #########
+
+class CartDetailView(TemplateView):
+    template_name = "cart_check.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # セッションキー確保
+        session_key = self.request.session.session_key
+        if not session_key:
+            self.request.session.create()
+            session_key = self.request.session.session_key
+
+        # カート取得 or 作成
+        cart, _ = Carts.objects.get_or_create(session_key=session_key)
+        # カートアイテム取得（全部取る）
+        cart_items = CartItems.objects.filter(cart=cart).select_related("item")
+
+        context["cart_items"] = cart_items
+        context["total_price"] = cart.get_total_price()
+        context["total_quantity"] = cart.get_total_quantity()
+
+        return context
+
+   
+def delete_cart_item(request, pk):
+    # カートとアイテムIDで、そのユーザのカートアイテムを全て削除
+    # p: pkはitem_id
+    
+    # Postで受け取る
     if request.method == "POST":
+        # セッション確認
         if not request.session.session_key:
             request.session.create()
         session_key = request.session.session_key
 
+        # カート取得 or 作成
+        cart, created = Carts.objects.get_or_create(session_key=session_key)
+        # カートアイテム取得
+        cart_item = CartItems.objects.filter(
+            cart=cart,
+            item_id=pk
+        )
+        cart_item.delete()
+    
+    return redirect('cart_detail')    
+
+def add_one_cart_func(request, pk):
+
+    # Postで受け取る
+    if request.method == "POST":
+        # セッション確認
+        if not request.session.session_key:
+            request.session.create()
+        session_key = request.session.session_key
+
+        # カート取得 or 作成
         cart, created = Carts.objects.get_or_create(session_key=session_key)
 
+        # カートアイテム取得
         cart_item = CartItems.objects.filter(
             cart=cart,
             item_id=pk
         ).first()
-            # cart_object = get_object_or_404(Carts,cart_id=cart_id)
 
-            # カートがあれば（一度でもアイテムをカートに入れていれば）
-            # cart_item = get_object_or_404(CartItems,item_id=pk)
-
-            # カートアイテムがあれば（カートへ同じ商品を追加であれば）
+        # カートアイテムがあれば（カートへ同じ商品を追加であれば）
         if cart_item:
             cart_item.quantity += 1
+        # なければ、カートアイテム作成
         else:
             cart_item = CartItems(cart=cart, item_id=pk, quantity=1)
 
+        # 保存
         cart_item.save()
         return redirect('index')
 
 def add_some_cart_func(request, pk):
-    return
-    # some・個数を受け取る
-    # ロジックは上と同じ
+
+        # Postで受け取る
+    if request.method == "POST":
+        
+        added_quantity = int(request.POST['quantity'])
+
+        # セッション確認
+        if not request.session.session_key:
+            request.session.create()
+        session_key = request.session.session_key
+
+        # カート取得 or 作成
+        cart, created = Carts.objects.get_or_create(session_key=session_key)
+
+        # カートアイテム取得
+        cart_item = CartItems.objects.filter(
+            cart=cart,
+            item_id=pk
+        ).first()
+
+        # カートアイテムがあれば（カートへ同じ商品を追加であれば）
+        if cart_item:
+            cart_item.quantity += added_quantity
+        # なければ、カートアイテム作成
+        else:
+            cart_item = CartItems(cart=cart, item_id=pk, quantity=added_quantity)
+
+        # 保存
+        cart_item.save()
+        return redirect('detail', pk)
+############################
+
+
+
+
 
