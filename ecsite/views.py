@@ -3,6 +3,9 @@ from django.shortcuts import get_object_or_404, redirect,render
 from django.db.models import F, Sum
 from django.urls import reverse_lazy
 from .models import Items, Carts, CartItems
+from django.views.decorators.http import require_POST
+
+from .utils import get_cart, get_cart_from_request
 
 class ItemListView(ListView):
     template_name = "index.html"
@@ -12,13 +15,8 @@ class ItemListView(ListView):
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
 
-            # カート取得（例：session）
-            if not self.request.session.session_key:
-                self.request.session.create()
-
-            cart, _ = Carts.objects.get_or_create(
-                session_key=self.request.session.session_key
-            )
+            # セッションの確認＋カート取得
+            cart, _ = get_cart(self)
 
             context["cart_quantity"] = cart.sum_cart_item_display()
             return context
@@ -34,9 +32,8 @@ class ItemDetailView(DetailView):
         # 今表示している商品
         current_item = self.object
 
-        cart, _ = Carts.objects.get_or_create(
-            session_key=self.request.session.session_key
-        )
+        # セッションの確認＋カート取得
+        cart, _ = get_cart(self)
 
         # 今の商品以外で、商品一覧から作成された新しい順で４つを出す。
         context['new_item_list'] = Items.objects.exclude(id=current_item.id).order_by('-created_at')[:4]
@@ -80,37 +77,29 @@ class CartDetailView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # セッションキー確保
-        session_key = self.request.session.session_key
-        if not session_key:
-            self.request.session.create()
-            session_key = self.request.session.session_key
+        # セッションの確認＋カート取得
+        cart, _ = get_cart(self)
 
-        # カート取得 or 作成
-        cart, _ = Carts.objects.get_or_create(session_key=session_key)
         # カートアイテム取得（全部取る）
         cart_items = CartItems.objects.filter(cart=cart).select_related("item")
 
         context["cart_items"] = cart_items
         context["total_price"] = cart.get_total_price()
-        context["total_quantity"] = cart.get_total_quantity()
+        context["total_quantity"] = cart.sum_cart_item_display()
 
         return context
-
-   
+    
+@require_POST
 def delete_cart_item(request, pk):
     # カートとアイテムIDで、そのユーザのカートアイテムを全て削除
     # p: pkはitem_id
     
     # Postで受け取る
     if request.method == "POST":
-        # セッション確認
-        if not request.session.session_key:
-            request.session.create()
-        session_key = request.session.session_key
+        
+        # セッションの確認＋カート取得
+        cart, _ = get_cart_from_request(request)
 
-        # カート取得 or 作成
-        cart, created = Carts.objects.get_or_create(session_key=session_key)
         # カートアイテム取得
         cart_item = CartItems.objects.filter(
             cart=cart,
@@ -120,35 +109,26 @@ def delete_cart_item(request, pk):
     
     return redirect('cart_detail')    
 
-def add_one_cart_func(request, pk):
+@require_POST
+def add_one_cart_func(request, pk, added_quantity=1):
 
     # Postで受け取る
     if request.method == "POST":
-        # セッション確認
-        if not request.session.session_key:
-            request.session.create()
-        session_key = request.session.session_key
-
-        # カート取得 or 作成
-        cart, created = Carts.objects.get_or_create(session_key=session_key)
+        
+        # セッションの確認＋カート取得
+        cart, _ = get_cart_from_request(request)
 
         # カートアイテム取得
-        cart_item = CartItems.objects.filter(
-            cart=cart,
-            item_id=pk
-        ).first()
-
-        # カートアイテムがあれば（カートへ同じ商品を追加であれば）
-        if cart_item:
-            cart_item.quantity += 1
+        cart_item, created = CartItems.objects.get_or_create( 
+            cart=cart, item_id=pk, defaults={'quantity': added_quantity} 
+            )
         # なければ、カートアイテム作成
-        else:
-            cart_item = CartItems(cart=cart, item_id=pk, quantity=1)
+        if not created: 
+            CartItems.objects.filter(pk=cart_item.pk).update(quantity=F('quantity') + added_quantity)
 
-        # 保存
-        cart_item.save()
         return redirect('index')
-
+    
+@require_POST
 def add_some_cart_func(request, pk):
 
         # Postで受け取る
@@ -156,13 +136,8 @@ def add_some_cart_func(request, pk):
         
         added_quantity = int(request.POST['quantity'])
 
-        # セッション確認
-        if not request.session.session_key:
-            request.session.create()
-        session_key = request.session.session_key
-
-        # カート取得 or 作成
-        cart, created = Carts.objects.get_or_create(session_key=session_key)
+        # セッションの確認＋カート取得
+        cart, _ = get_cart_from_request(request)
 
         # カートアイテム取得
         cart_item = CartItems.objects.filter(
